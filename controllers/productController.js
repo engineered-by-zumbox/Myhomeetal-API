@@ -289,7 +289,8 @@ const productController = {
             // console.log('Number of products in category:', productCategory.products.length);
     
             // Fetch all products in the category
-            const products = await Product.find({_id: {$in: productCategory.products}}).populate('category', 'name').populate('review', 'rating')
+            const products = await Product.find({_id: {$in: productCategory.products}}).populate('category', 'name').populate('review', 'rating').populate('subCategory', 'name')
+
     
             console.log('Number of products fetched:', products.length);
     
@@ -307,7 +308,7 @@ const productController = {
     },
     fetchAllProducts: async (req, res) => {
         try {
-            const totalProducts = await Product.find().populate('category', 'name').populate('inventory', 'quantity' )
+            const totalProducts = await Product.find().populate('category', 'name').populate('inventory', 'quantity' ).populate('subCategory', 'name')
             
             res.json(totalProducts)
         } catch (error) {
@@ -874,8 +875,8 @@ const productController = {
     
             // Fetch all products in the sub-category
             const products = await Product.find({_id: {$in: subCategory.products}})
-            .populate('subCategory', 'name')
-            .populate('review', 'rating')
+            // .populate(''subCategory', 'name'')
+            // .populate('review', 'rating')
             .sort({ _id: -1 });
     
             // Reverse the order of products

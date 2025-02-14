@@ -4,9 +4,10 @@ const cloudinary = require("../config/cloudinary");
 const fs = require("fs");
 
 
+
 const createProductSubCategory = async (req, res) => {
     try {
-        const { name, category, products} = req.body;
+        const { name, category} = req.body;
 
         // Check if a subcategory with the same name already exists
         const existingSubCategory = await productSubCategoryModel.findOne({ name });
@@ -16,7 +17,7 @@ const createProductSubCategory = async (req, res) => {
             });
         }
 
-        let subCategoryImage = null;
+         subCategoryImage = null;
 
         // Handle file upload to Cloudinary
         if (req.file) {
@@ -25,7 +26,7 @@ const createProductSubCategory = async (req, res) => {
                     {folder: 'productSubCategories'} 
                 );
 
-                subCategoryImage = result.secure_url
+                subCategoryImage = result.secure_url 
                 fs.unlinkSync(req.file.path);
             } catch (error) {
                 console.error('Cloudinary upload error:', error.message);
@@ -37,7 +38,6 @@ const createProductSubCategory = async (req, res) => {
             name,
             subCategoryImage,
             category,
-            products: [],
             createdBy: req.admin.email,
             createdOn: new Date().toLocaleString('en-NG', { timeZone: 'Africa/Lagos' })
         };
@@ -48,22 +48,18 @@ const createProductSubCategory = async (req, res) => {
         const subCategory = new productSubCategoryModel(data);
         const newSubCategory = await subCategory.save();
 
-        const productsCategory = await productCategory.findById(category).populate('subCategory')
-        .populate('products')
+        const productsCategory = await productCategory.findById(category).populate('products')
+        
+    if (productsCategory) {
+        // Now populate the products field in the new subcategory
+        newSubCategory.products = productsCategory.products; // Assign products from category to subcategory
+        await newSubCategory.save(); // Save updated subcategory
 
-        if(productsCategory) {
-            // const subCategoryId = data._id
-            // productsCategory.subCategory.push(data);
-            productsCategory.subCategory.push(newSubCategory._id);
-            // console.log(newSubCategory._id)
-            await productsCategory.save();
+        // Add the new subcategory to the productCategory's subCategory field
+        productsCategory.subCategory.push(newSubCategory._id);
+        await productsCategory.save();
+    }
 
-        // Debug: Check category products
-    const categoryProducts = productsCategory.products.map(product => product._id);
-    // console.log(categoryProducts);
-    newSubCategory.products = categoryProducts;
-    await newSubCategory.save();
-        }
         res.status(200).json({
             message: 'Successfully created a new subcategory',
             subCategory: newSubCategory,
@@ -81,7 +77,7 @@ const createProductSubCategory = async (req, res) => {
 const getProductSubCategory = async (req, res) => {
     try {
 
-        const subCategories = await productSubCategoryModel.find()
+        const subCategories = await productSubCategoryModel.find().populate('products')
 
         if(!subCategories) {
             return res.status(400).json({
@@ -107,7 +103,7 @@ const getOneSubCategory = async (req, res) => {
     try {
 
         const subCategoryId = req.params.id;  // get the subCategory id
-        const subCategory = await productSubCategoryModel.findById(subCategoryId)   // then check through the database
+        const subCategory = await productSubCategoryModel.findById(subCategoryId).populate('products')
 
         if (!subCategory) {
             return res.status(400).json({
@@ -115,14 +111,16 @@ const getOneSubCategory = async (req, res) => {
             })
         } else {
             res.status(200).json({
-                message: `subcategory ${subCategory.name} found`,
-                data: subCategory
+                message: `subcategory ${subCategory.name} found`, 
+                data: subCategory                          
             })
         }
+
+        
     } catch (error) {
         console.error('server error:' , error.message)
         res.status(500).json({
-            message: `unable to fetch ${subCategory}`
+            message: `unable to fetch subcategory`
         })
     }
 }
