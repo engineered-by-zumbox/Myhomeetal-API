@@ -52,8 +52,8 @@ const createProductSubCategory = async (req, res) => {
         
     if (productsCategory) {
         // Now populate the products field in the new subcategory
-        newSubCategory.products = productsCategory.products; // Assign products from category to subcategory
-        await newSubCategory.save(); // Save updated subcategory
+        newSubCategory.products = productsCategory.products; 
+        await newSubCategory.save(); 
 
         // Add the new subcategory to the productCategory's subCategory field
         productsCategory.subCategory.push(newSubCategory._id);
