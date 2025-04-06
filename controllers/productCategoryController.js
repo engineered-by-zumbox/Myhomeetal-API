@@ -49,7 +49,7 @@ const productCategoryController = {
 
     getProductCategories: async (req, res) => {
         try {
-            const productCategories = await ProductCategory.find();
+            const productCategories = await ProductCategory.find().populate("products")
 
             if(!productCategories){
                 return res.status(404).json({error: 'No Product Category found'})

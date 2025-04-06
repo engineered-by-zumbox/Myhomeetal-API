@@ -3,3 +3,4 @@ package-lock.json
 .env
 server1.js
 vercel.json
+.qodo

@@ -3,7 +3,7 @@ const router = express.Router();
 const authenticateAdmin = require('../middlewares/authenticateAdmin');
 const productCategoryController = require('../controllers/productCategoryController');
 const upload = require('../config/multer');
-
+    
 //Public Routes
 router.get('/categories', productCategoryController.getProductCategories);
 router.get('/top-categories', productCategoryController.getTopProductCategories);

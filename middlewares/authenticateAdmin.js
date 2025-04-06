@@ -16,7 +16,7 @@ const authenticateAdmin = async (req, res, next) => {
     try {
         //Verify the token
         const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
-        console.log('decoded token:', decodedToken)
+        // console.log('decoded token:', decodedToken)
 
         //Find the admin by ID stored in the token
         const admin = await Admin.findById(decodedToken.id);

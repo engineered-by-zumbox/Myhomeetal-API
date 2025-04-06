@@ -10,7 +10,7 @@ const adminController = {
         try {
             //Check if there are any existing admins
             const existingAdmin = await Admin.findOne();
-            const adminRole = existingAdmin ? 'Employee Admin' : 'Super Admin';
+            const adminRole = existingAdmin ? 'Employee Admin' : 'Super Admin'; 
 
             const {username, email, password} = req.body;
 
@@ -32,8 +32,12 @@ const adminController = {
             return res.status(500).json({error: 'Sorry, but only one super admin account can be created'})
         }
     },
+
+    
+
     signIn: async (req, res) => {
         try {
+            console.log(req.headers); //
             const {email, password} = req.body;
 
             const admin = await Admin.findOne({email});
@@ -78,6 +82,7 @@ const adminController = {
             return res.status(500).json({error: error.message})
         }
     },
+
     createEmployeeAdmin: async (req, res) => {
         try {
             const {
