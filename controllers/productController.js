@@ -289,7 +289,8 @@ const productController = {
             // console.log('Number of products in category:', productCategory.products.length);
     
             // Fetch all products in the category
-            const products = await Product.find({_id: {$in: productCategory.products}}).populate('category', 'name').populate('review', 'rating')
+            const products = await Product.find({_id: {$in: productCategory.products}}).populate('category', 'name').populate('review', 'rating').populate('subCategory', 'name')
+
     
             console.log('Number of products fetched:', products.length);
     
@@ -307,7 +308,7 @@ const productController = {
     },
     fetchAllProducts: async (req, res) => {
         try {
-            const totalProducts = await Product.find().populate('category', 'name').populate('inventory', 'quantity' )
+            const totalProducts = await Product.find().populate('category', 'name').populate('inventory', 'quantity' ).populate('subCategory', 'name')
             
             res.json(totalProducts)
         } catch (error) {
@@ -857,7 +858,42 @@ const productController = {
         //     error: error.message
         //   });
         // }
-       }
+       },
+
+       viewProductsBySubCategory: async (req, res) => {
+        try {
+            // Get the sub-category id
+            const subCategoryId = req.params.id;
+    
+            // Retrieve subCategory by ID
+            const subCategory = await ProductSubCategory.findById(subCategoryId);
+    
+            // Check if the subCategory exists
+            if (!subCategory) {
+                return res.status(404).json({error: 'Product subCategory not found'});
+            }
+    
+            // Fetch all products in the sub-category
+            const products = await Product.find({_id: {$in: subCategory.products}})
+            // .populate(''subCategory', 'name'')
+            // .populate('review', 'rating')
+            .sort({ _id: -1 });
+    
+            // Reverse the order of products
+            // const reversedProducts = products.reverse();
+    
+            res.json({
+              subCategory: subCategory.name,
+              totalProducts: products.length,
+              // products: products.map(product => product.productTitle)
+              products: products
+              // products: products.map(product => product._id)
+          });
+        } catch (error) {
+            console.error('Error in viewProductsByCategory:', error);
+            return res.status(500).json({error: 'Oops! An error occurred, please refresh'});
+        }
+    },
 
 
 
