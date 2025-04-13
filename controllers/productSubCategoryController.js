@@ -128,6 +128,7 @@ const getAllSubCat = async (req, res) => {
           "products._id": 1,
           "products.productTitle": 1,
           "products.price": 1,
+          "products.description": 1,
           // Add other product properties you want to include
 
           // Optionally, you can reshape or rename fields like below
