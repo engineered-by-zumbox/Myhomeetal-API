@@ -2,6 +2,7 @@ const productSubCategoryModel = require('../models/ProductSubCategory');
 const productCategory = require('../models/ProductCategory');
 const cloudinary = require("../config/cloudinary");
 const fs = require("fs");
+const mongoose = require("mongoose");
 
 
 
@@ -74,56 +75,184 @@ const createProductSubCategory = async (req, res) => {
 };
 
 
-const getProductSubCategory = async (req, res) => {
+// const getProductSubCategory = async (req, res) => {
+//     try {
+
+//         const subCategories = await productSubCategoryModel.find().populate('products')
+
+//         if(!subCategories) {
+//             return res.status(400).json({
+//                 message: 'there are no available sub-categories'
+//             })
+//         } else {
+//             return res.status(200).json({
+//                 message: "all sub_categories",
+//                 data: subCategories
+//             })
+//         }
+//     } catch (error) {
+//         console.error('server errror:', error.message);
+//         res.status(500).json({
+//             error: error.message,
+//             message: "unable to fetch sub-categories"
+//         })
+//     }
+// }
+
+
+const getAllSubCat = async (req, res) => {
+  try {
+    const subCatWithProducts = await productSubCategoryModel.aggregate([
+      {
+        $lookup: {
+          from: "products",
+          localField: "_id",
+          foreignField: "subCategory",
+          as: "products",
+        },
+      },
+      {
+        $unwind: {
+          // Optional: Unwind the products array to process each product individually
+          path: "$products",
+          preserveNullAndEmptyArrays: true, // Keep subcategories even if they have no products
+        },
+      },
+      {
+        $project: {
+          _id: 1, // Include the subcategory's _id
+          name: 1, // Include the subcategory's name
+          //   subCategoryImage: 1,  Include the subcategory's image
+
+          // Include specific product properties
+          "products._id": 1,
+          "products.productTitle": 1,
+          "products.price": 1,
+          // Add other product properties you want to include
+
+          // Optionally, you can reshape or rename fields like below
+          // productId: '$products._id',
+        },
+      },
+      {
+        $group: {
+          // Group back by subcategory _id to reconstruct the products array
+          _id: "$_id",
+          name: { $first: "$name" },
+        //   subCategoryImage: { $first: "$subCategoryImage" },
+          products: { $push: "$products" },
+        },
+      },
+      {
+         $sort: { name: 1 }
+      },
+    ]);
+    return res.status(200).json({
+      message: "all subcategories with products",
+      data: subCatWithProducts,
+    });
+  } catch (error) {
+    console.error("error fetching subCategories with products:", error.message);
+    res.status(500).json({
+      message: `unable to fetch subcategory and products`,
+    });
+  }
+};
+
+
+// const getAllSubCat = async (req, res) => {
+//   try {
+//     const subCatWithProducts = await productSubCategoryModel.aggregate([
+//       {
+//         $lookup: {
+//           from: "products",
+//           localField: "_id",
+//           foreignField: "subCategory",
+//           as: "products",
+//         },
+//       },
+//     ]);
+//     return res.status(200).json({
+//       message: "all subcategories with products",
+//       data: subCatWithProducts,
+//     });
+//   } catch (error) {
+//     console.error("error fetching subCategories with products:", error.message);
+//     res.status(500).json({
+//       message: `unable to fetch subcategory and products`,
+//     });
+//   }
+// };
+
+
+const getOneSubCat = async (req, res) => {
     try {
-
-        const subCategories = await productSubCategoryModel.find().populate('products')
-
-        if(!subCategories) {
-            return res.status(400).json({
-                message: 'there are no available sub-categories'
-            })
-        } else {
-            return res.status(200).json({
-                message: "all sub_categories",
-                data: subCategories
-            })
-        }
-    } catch (error) {
-        console.error('server errror:', error.message);
-        res.status(500).json({
-            error: error.message,
-            message: "unable to fetch sub-categories"
-        })
-    }
-}
-
-
-const getOneSubCategory = async (req, res) => {
-    try {
-
-        const subCategoryId = req.params.id;  // get the subCategory id
-        const subCategory = await productSubCategoryModel.findById(subCategoryId).populate('products')
-
-        if (!subCategory) {
-            return res.status(400).json({
-                message: `subCategory not available`
-            })
+        const subCatId = req.params.id;
+        const getSubCat = await productSubCategoryModel.aggregate([
+            {
+                $match: { _id: new mongoose.Types.ObjectId(subCatId) }
+            },
+            { 
+                $lookup: {
+                    from: 'products',
+                    localField: '_id',
+                    foreignField: 'subCategory',
+                    as: 'products'
+                }
+            },
+            // add a project stage to reshape the output if needed
+            {
+                $project: {
+                    _id: 1,
+                    name: 1,
+                    subCategory: 1,
+                    products: 1
+                }
+            }
+        ]);
+        if (!getSubCat || getSubCat.length === 0) {
+            return res.status(404).json({
+                message: `Sub-category not found`
+            });
         } else {
             res.status(200).json({
-                message: `subcategory ${subCategory.name} found`, 
-                data: subCategory                          
+                message: `sub-category ${getSubCat[0].name} found`,
+                data: getSubCat[0]
             })
         }
-
-        
     } catch (error) {
-        console.error('server error:' , error.message)
-        res.status(500).json({
-            message: `unable to fetch subcategory`
-        })
+      console.error("server error:", error.message);
+      res.status(500).json({
+        message: `unable to fetch subcategory`,
+      });
     }
 }
+
+// const getOneSubCategory = async (req, res) => {
+//     try {
+
+//         const subCategoryId = req.params.id;  // get the subCategory id
+//         const subCategory = await productSubCategoryModel.findById(subCategoryId).populate('products')
+
+//         if (!subCategory) {
+//             return res.status(400).json({
+//                 message: `subCategory not available`
+//             })
+//         } else {
+//             res.status(200).json({
+//                 message: `subcategory ${subCategory.name} found`, 
+//                 data: subCategory                          
+//             })
+//         }
+
+        
+//     } catch (error) {
+//         console.error('server error:' , error.message)
+//         res.status(500).json({
+//             message: `unable to fetch subcategory`
+//         })
+//     }
+// }
 
 
 const updateSubCategory = async (req, res) => {
@@ -255,8 +384,11 @@ const deleteSubCategory = async (req, res) => {
 
 module.exports = { 
     createProductSubCategory, 
-    getProductSubCategory, 
-    getOneSubCategory,
+    // getProductSubCategory, 
+    getAllSubCat,
+    // getOneSubCategory,
+    getOneSubCat,
     updateSubCategory,
     deleteSubCategory
 }
+
