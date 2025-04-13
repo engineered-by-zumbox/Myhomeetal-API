@@ -111,42 +111,6 @@ const getAllSubCat = async (req, res) => {
           as: "products",
         },
       },
-      {
-        $unwind: {
-          // Optional: Unwind the products array to process each product individually
-          path: "$products",
-          preserveNullAndEmptyArrays: true, // Keep subcategories even if they have no products
-        },
-      },
-      {
-        $project: {
-          _id: 1, // Include the subcategory's _id
-          name: 1, // Include the subcategory's name
-          //   subCategoryImage: 1,  Include the subcategory's image
-
-          // Include specific product properties
-          "products._id": 1,
-          "products.productTitle": 1,
-          "products.price": 1,
-          "products.description": 1
-          // Add other product properties you want to include
-
-          // Optionally, you can reshape or rename fields like below
-          // productId: '$products._id',
-        },
-      },
-      {
-        $group: {
-          // Group back by subcategory _id to reconstruct the products array
-          _id: "$_id",
-          name: { $first: "$name" },
-        //   subCategoryImage: { $first: "$subCategoryImage" },
-          products: { $push: "$products" },
-        },
-      },
-      {
-         $sort: { name: 1 }
-      },
     ]);
     return res.status(200).json({
       message: "all subcategories with products",
@@ -160,7 +124,6 @@ const getAllSubCat = async (req, res) => {
   }
 };
 
-
 // const getAllSubCat = async (req, res) => {
 //   try {
 //     const subCatWithProducts = await productSubCategoryModel.aggregate([
@@ -171,6 +134,42 @@ const getAllSubCat = async (req, res) => {
 //           foreignField: "subCategory",
 //           as: "products",
 //         },
+//       },
+//       {
+//         $unwind: {
+//           // Optional: Unwind the products array to process each product individually
+//           path: "$products",
+//           preserveNullAndEmptyArrays: true, // Keep subcategories even if they have no products
+//         },
+//       },
+//       {
+//         $project: {
+//           _id: 1, // Include the subcategory's _id
+//           name: 1, // Include the subcategory's name
+//           //   subCategoryImage: 1,  Include the subcategory's image
+
+//           // Include specific product properties
+//           "products._id": 1,
+//           "products.productTitle": 1,
+//           "products.price": 1,
+//           "products.description": 1,
+//           // Add other product properties you want to include
+
+//           // Optionally, you can reshape or rename fields like below
+//           // productId: '$products._id',
+//         },
+//       },
+//       {
+//         $group: {
+//           // Group back by subcategory _id to reconstruct the products array
+//           _id: "$_id",
+//           name: { $first: "$name" },
+//           //   subCategoryImage: { $first: "$subCategoryImage" },
+//           products: { $push: "$products" },
+//         },
+//       },
+//       {
+//         $sort: { name: 1 },
 //       },
 //     ]);
 //     return res.status(200).json({
