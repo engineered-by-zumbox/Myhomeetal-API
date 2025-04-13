@@ -2,8 +2,10 @@ const express = require ('express');
 const router = express.Router();
 const authenticateAdmin = require('../middlewares/authenticateAdmin');
 const { createProductSubCategory,
-        getProductSubCategory,
-        getOneSubCategory,
+        // getProductSubCategory,
+        getAllSubCat,
+        // getOneSubCategory,
+        getOneSubCat,
         updateSubCategory, 
         deleteSubCategory } = require('../controllers/productSubCategoryController');
         
@@ -16,8 +18,10 @@ router.delete('/delete/:id', authenticateAdmin, deleteSubCategory)
 
 
 // public routes
-router.get('/all', getProductSubCategory)
-router.get('/:id', getOneSubCategory)
+// router.get('/all',  getProductSubCategory)
+router.get("/all", getAllSubCat)
+// router.get('/:id', getOneSubCategory)
+router.get("/:id", getOneSubCat);
 
 
 

@@ -5,7 +5,7 @@ const productCategoryController = require('../controllers/productCategoryControl
 const upload = require('../config/multer');
     
 //Public Routes
-router.get('/categories', productCategoryController.getProductCategories);
+router.get("/categories", productCategoryController.getCategories);
 router.get('/top-categories', productCategoryController.getTopProductCategories);
 
 //Private Routes
