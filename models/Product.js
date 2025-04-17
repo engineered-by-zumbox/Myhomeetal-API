@@ -21,7 +21,6 @@ const productSchema = new Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "ProductCategory",
     required: true,
-    index: true
   },
   subCategory: {
     type: mongoose.Schema.Types.ObjectId,

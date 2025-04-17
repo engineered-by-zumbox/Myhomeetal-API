@@ -52,99 +52,48 @@ const productCategoryController = {
     }
   },
 
-  // getProductCategories: async (req, res) => {
-  //     try {
-  //         const productCategories = await ProductCategory.find().populate("products")
+  getProductCategories: async (req, res) => {
+      try {
+          const productCategories = await ProductCategory.find().populate("products", "productTitle").populate("subCategory", "name");
 
-  //         if(!productCategories){
-  //             return res.status(404).json({error: 'No Product Category found'})
-  //         }
-  //         res.json(productCategories)
-  //     } catch (error) {
-  //         return res.status(500).json({error: 'Ooops!! an error occured, please refresh'})
-  //     }
-  // },
-
-  getCategories: async (req, res) => {
-    try {
-      const catWithProducts = await ProductCategory.aggregate([
-        {
-          $lookup: {
-            from: "products",
-            localField: "_id",
-            foreignField: "category",
-            as: "products",
-          },
-        },
-        {
-          $sort: { name: 1 },
-        },
-      ]).collation({ locale: "en", strength: 2 });
-
-      return res.status(200).json({
-        message: "all categories with Products and Subcategories",
-        data: catWithProducts,
-      });
-    } catch (error) {
-      console.log(error.message);
-      return res
-        .status(500)
-        .json({ error: "Ooops!! an error occured, please refresh" });
-    }
+          if(!productCategories){
+              return res.status(404).json({error: 'No Product Category found'})
+          }
+          res.json(productCategories)
+      } catch (error) {
+          return res.status(500).json({error: 'Ooops!! an error occured, please refresh'})
+      }
   },
 
   // getCategories: async (req, res) => {
-  //     try {
-  //         const catWithProducts = await ProductCategory.aggregate([
-  //           {
-  //             $lookup: {
-  //               from: "products",
-  //               localField: "_id",
-  //               foreignField: "category",
-  //               as: "products",
-  //             },
-  //           },
-  //           {
-  //             $unwind: {
-  //                 path: '$products',
-  //                 preserveNullAndEmptyArrays: true
-  //             }
+  //   try {
+  //     const catWithProducts = await ProductCategory.aggregate([
+  //       {
+  //         $lookup: {
+  //           from: "products",
+  //           localField: "_id",
+  //           foreignField: "category",
+  //           as: "products",
   //         },
-  //         {
-  //             $project: {
-  //                 _id: 1,
-  //                 name: 1,
-  //                 products: {
-  //                     _id: 1,
-  //                     productTitle: 1,
-  //                     price: 1,
-  //                     description: 1,
-  //                     // images: 1
-  //                 }
-  //             }
-  //         },
-  //         {
-  //             $group: {
-  //                 _id: '$_id',
-  //                 name: { $first: '$name' },
-  //                 products: { $push: '$products' }
-  //             }
-  //         },
-  //         {
-  //             $sort: { name: 1 },
-  //         },
-  //     ]).collation({ locale: 'en', strength: 2 });
+  //       },
+  //       {
+  //         $sort: { name: 1 },
+  //       },
+  //     ]).collation({ locale: "en", strength: 2 });
 
   //     return res.status(200).json({
-  //         message: 'all categories with Products',
-  //         data: catWithProducts
-  //     })
-  //     } catch (error) {
-  //         console.log(error.message)
-  //         return res.status(500).json({error: 'Ooops!! an error occured, please refresh'})
-  //     }
+  //       message: "all categories with Products and Subcategories",
+  //       data: catWithProducts,
+  //     });
+  //   } catch (error) {
+  //     console.log(error.message);
+  //     return res
+  //       .status(500)
+  //       .json({ error: "Ooops!! an error occured, please refresh" });
+  //   }
   // },
 
+  
   getTopProductCategories: async (req, res) => {
     try {
       const topCategories = await ProductCategory.aggregate([
