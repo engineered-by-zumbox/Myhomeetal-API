@@ -127,7 +127,7 @@ const productController = {
                 await productCategory.save();
             }
 
-            const subCat = await ProductSubCategory.findById(subCategory).populate('products', 'name');
+            const subCat = await ProductSubCategory.findById(subCategory).populate('products'); // don't think there should be a populate here
 
             if (subCat) {
               subCat.products.push(product);
@@ -289,8 +289,12 @@ const productController = {
             // console.log('Number of products in category:', productCategory.products.length);
     
             // Fetch all products in the category
-            const products = await Product.find({_id: {$in: productCategory.products}}).populate('category', 'name').populate('review', 'rating').populate('subCategory', 'name')
-
+            const products = await Product.find({
+              _id: { $in: productCategory.products },
+            })
+              .populate("category", "name")
+              .populate("review", "rating")
+              .populate("subCategory", "name subCategoryImage");
     
             console.log('Number of products fetched:', products.length);
     
@@ -327,7 +331,7 @@ const productController = {
 
             res.json(product);
         } catch (error) {
-            return res.status(500).json({error: error.message})
+            return res.status(500).json({error: error.message}) 
         }
     },
 
@@ -415,9 +419,6 @@ const productController = {
     
             // Handle keyFeatures array
             const keyFeaturesArray = Array.isArray(keyFeatures) ? keyFeatures : [keyFeatures];
-
-            //Handle subcategories array
-            // const subCategoriesArray = Array.isArray(subCategories) ? subCategories : [subCategories];
     
             // Update product fields
             product.productTitle = productTitle || product.productTitle;

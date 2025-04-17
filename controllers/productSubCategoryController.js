@@ -347,7 +347,7 @@ const deleteSubCategory = async (req, res) => {
 
         if(!subCategory) {
             return res.status(404).json({
-                message: "trying to delete an invalid category"
+                message: "trying to delete an invalid Subcategory"
             })
         } 
 
