@@ -200,6 +200,7 @@ const productController = {
     
             for (const productData of products) {
                 let category = null;
+                let subCategory = null;
                 
                 if (productData.category) {
                     // console.log('Searching for category:', productData.category);
@@ -218,6 +219,21 @@ const productController = {
                         // console.log('New category created:', category);
                     }
                 }
+
+                // Handle SubCategory 
+            if (productData.subCategory) {
+                subCategory = await ProductSubCategory.findOne({
+                    name: { $regex: new RegExp('^' + productData.subCategory + '$', 'i') }
+                });
+
+                if (!subCategory) {
+                    subCategory = new ProductSubCategory({
+                        name: productData.subCategory,
+                        products: []
+                    });
+                    await subCategory.save();
+                }
+            }
     
                 const inventory = new Inventory({
                     productName: productData.productTitle,
@@ -230,6 +246,7 @@ const productController = {
                     productTitle: productData.productTitle,
                     price: productData.price,
                     category: category ? category._id : null,
+                    subCategory: subCategory ? subCategory._id : null,
                     description: productData.description,
                     images: productData.images,
                     inventory: inventory._id,
@@ -257,6 +274,11 @@ const productController = {
                 if (category) {
                     category.products.push(savedProduct._id);
                     await category.save();
+                }
+
+                if (subCategory) {
+                  subCategory.products.push(savedProduct._id);
+                  await subCategory.save();
                 }
             }
                  // Set a timer to update isProductNew field after 48 hours
@@ -895,9 +917,6 @@ const productController = {
             return res.status(500).json({error: 'Oops! An error occurred, please refresh'});
         }
     },
-
-
-
 
 }
 module.exports = productController;
