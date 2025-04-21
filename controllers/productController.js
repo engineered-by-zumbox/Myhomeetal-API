@@ -162,6 +162,7 @@ const productController = {
                     productTitle: data.productTitle,
                     price: data.price,
                     category: data.category,
+                    subCategory: data.subCategory,
                     description: data.description,
                     images: [data.image1, data.image2, data.image3, data.image4].filter(Boolean),
                     inventory: data.inventory,
