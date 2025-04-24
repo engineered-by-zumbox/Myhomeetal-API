@@ -84,10 +84,10 @@ const productSchema = new Schema({
   updatedBy: {
     type: String,
   },
-  inStock: {
-    type: Boolean,
-    default: false,
-  },
+  // inStock: {  
+  //   type: Boolean,     --- AM SORRY SON, THIS HAS TO LEAVE 
+  //   default: false,
+  // },               
 });
 
 const Product = model('Product', productSchema);

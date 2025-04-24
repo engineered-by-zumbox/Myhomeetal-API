@@ -7,36 +7,15 @@ const fs = require('fs');
 const multer = require('multer');
 const uploadCsv = multer({dest:'uploads/csv'});
 const cloudinary = require('../config/cloudinary');
-// const {algoliasearch} = require('algoliasearch');
+
 const Memcached = require('memcached');
 const logSearchQuery = require('../utils/logSearchQuery')
 
 
-// const client = algoliasearch(process.env.ALGOLIA_APP_ID, process.env.ALGOLIA_ADMIN_API_KEY);
-// const index = client.initIndex('products');
 
 const memcached = new Memcached(process.env.MEMCACHED_SERVER || 'localhost:11211')
 
 
-// Helper function to create Algolia record
-// const indexAlgoliaRecord = async (product) => {
-//     const populatedProduct = await Product.findById(product._id).populate('category');
-//     const categoryName = populatedProduct.category?.name || '';
-  
-//     return {
-//       objectID: populatedProduct._id.toString(),
-//       productTitle: populatedProduct.productTitle,
-//       category: {
-//         name: categoryName
-//       },
-//       subCategories: populatedProduct.subCategories || [],
-//       brand: populatedProduct.brand,
-//       mainMaterial: populatedProduct.mainMaterial,
-//       color: populatedProduct.color,
-//       description: populatedProduct.description || '',
-//       searchData: `${populatedProduct.productTitle} ${populatedProduct.brand} ${categoryName} ${populatedProduct.subCategories.join(' ')} ${populatedProduct.mainMaterial} ${populatedProduct.color} ${populatedProduct.description || ''}`.toLowerCase()
-//     };
-//   };
 
 
 const productController = {
@@ -104,19 +83,13 @@ const productController = {
                 size,
                 sku,
                 subCategory,
-                // inStock: newInventory.quantity,
+                // inStock: newInventory.quantity, ---- YOU SEE HOW YOU ARE CONFUSING YOURSELF MY CHIEF
                 createdBy: req.admin.email,
                 createdOn: new Date().toLocaleString('en-NG', { timeZone: 'Africa/Lagos' })
             });
 
             await product.save();
 
-            // const algoliaRecord = await indexAlgoliaRecord(product);
-
-            // await client.saveObject({
-            //     indexName: 'products',
-            //     body: algoliaRecord
-            // })
 
             // Check if product category exists in the database
             const productCategory = await ProductCategory.findById(category).populate('products');
@@ -204,20 +177,18 @@ const productController = {
                 let subCategory = null;
                 
                 if (productData.category) {
-                    // console.log('Searching for category:', productData.category);
     
                     category = await ProductCategory.findOne({name: { $regex: new RegExp('^' + productData.category + '$', 'i') }});
                     
-                    // console.log('Found category:', category);
     
                     if (!category) {
-                        // console.log('Category not found. Creating new category:', productData.category);
+
                         category = new ProductCategory({
                             name: productData.category,
                             products: []
                         });
                         await category.save();
-                        // console.log('New category created:', category);
+
                     }
                 }
 
@@ -265,11 +236,7 @@ const productController = {
                 // console.log('Product to be saved:', product);
     
                 const savedProduct = await product.save();
-                // const algoliaRecord = await indexAlgoliaRecord(savedProduct);
-                // await client.saveObject({
-                //     indexName: 'products',
-                //     body: algoliaRecord
-                // })
+
                 publishedProductsIds.push(savedProduct._id);
     
                 if (category) {
@@ -298,7 +265,7 @@ const productController = {
         try {
             // Get the category id
             const categoryId = req.params.id;
-            // console.log('Category ID:', categoryId);
+
     
             // Retrieve ProductCategory by ID
             const productCategory = await ProductCategory.findById(categoryId);
@@ -308,8 +275,6 @@ const productController = {
                 return res.status(404).json({error: 'Product Category not found'});
             }
     
-            // console.log('Product Category:', productCategory.name);
-            // console.log('Number of products in category:', productCategory.products.length);
     
             // Fetch all products in the category
             const products = await Product.find({
@@ -323,9 +288,7 @@ const productController = {
     
             // Reverse the order of products
             const reversedProducts = products.reverse();
-    
-            // console.log('First product after reversal:', reversedProducts[0]?.productTitle);
-            // console.log('Last product after reversal:', reversedProducts[reversedProducts.length - 1]?.productTitle);
+
     
             res.json(reversedProducts);
         } catch (error) {
@@ -471,22 +434,6 @@ const productController = {
             const categoryName = populatedProduct.category?.name || '';
             const subCategoryName = populatedProduct.subCategory?.name || '';
 
-            // Update Algolia index with correct partial update structure
-            // await client.partialUpdateObject({
-            //     indexName: 'products',
-            //     objectID: product._id.toString(),
-            //     attributesToUpdate: {
-            //         productTitle: populatedProduct.productTitle,
-            //         category: {
-            //             name: categoryName
-            //         },
-            //         subCategories: populatedProduct.subCategories,
-            //         brand: populatedProduct.brand,
-            //         mainMaterial: populatedProduct.mainMaterial,
-            //         color: populatedProduct.color,
-            //         searchData: `${populatedProduct.productTitle} ${populatedProduct.brand} ${categoryName} ${populatedProduct.mainMaterial} ${populatedProduct.color}`.toLowerCase()
-            //     }
-            // });
     
             // Check if the product category has changed
             if (category && category !== product.category.toString()) {
@@ -546,11 +493,6 @@ const productController = {
             //Delete the product itself
             await Product.findByIdAndDelete(productId);
 
-            //Delete index from Algolia
-            // await client.deleteObject({
-            //     indexName: 'products',
-            //     objectID: productId
-            // })
 
             res.json({message: 'Product deleted successfully'})
         } catch (error) {
@@ -638,15 +580,6 @@ const productController = {
               }
             }
     
-            // Perform batch update for Algolia
-            // if (algoliaUpdates.length > 0) {
-            //   await client.partialUpdateObjects({
-            //     indexName: 'products',
-            //     objects: algoliaUpdates,
-            //     createIfNotExists: true
-            //   });
-            //   console.log(`Algolia batch update completed for ${algoliaUpdates.length} products of brand ${brand}`);
-            // }
     
             return `Updated ${updateCount} products for ${brand}`;
           });
@@ -796,6 +729,8 @@ const productController = {
         }
       },
 
+
+      // VALENTINE, YOU DON'T NEED THIS
       updateStock: async (req, res) => {
         try {
           const productId = req.params.id;
@@ -834,6 +769,7 @@ const productController = {
             error: error.message
           });
         }
+        //   I GUESS YOU WILL BE NEEDING THIS ANYMORE TOO, IF YOU ARE NOT CLEAR IT
 
         // try {
         //   const productId = req.params.id;
