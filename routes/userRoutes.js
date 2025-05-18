@@ -9,7 +9,8 @@ router.post('/sign-up', userController.signUp);
 router.post('/sign-in', userController.signIn);
 router.post('/verify-otp', userController.verifyOtp);
 router.post('/resend-otp', userController.resendOtp);
-router.get('/product-categories', userController.getProductCategories)
+router.get('/product-categories', userController.getProductCategories);
+router.get("/product-sub-categories", userController.getProductSubCategories);
 router.get('/all-users', userController.fetchAllUsers);
 router.post('/forgot-pass', userController.forgotPassword);
 router.post('/reset-pass', userController.resetPassword);

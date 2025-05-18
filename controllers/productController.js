@@ -12,31 +12,8 @@ const Memcached = require('memcached');
 const logSearchQuery = require('../utils/logSearchQuery')
 
 
-// const client = algoliasearch(process.env.ALGOLIA_APP_ID, process.env.ALGOLIA_ADMIN_API_KEY);
-// const index = client.initIndex('products');
-
 const memcached = new Memcached(process.env.MEMCACHED_SERVER || 'localhost:11211')
 
-
-// Helper function to create Algolia record
-// const indexAlgoliaRecord = async (product) => {
-//     const populatedProduct = await Product.findById(product._id).populate('category');
-//     const categoryName = populatedProduct.category?.name || '';
-  
-//     return {
-//       objectID: populatedProduct._id.toString(),
-//       productTitle: populatedProduct.productTitle,
-//       category: {
-//         name: categoryName
-//       },
-//       subCategories: populatedProduct.subCategories || [],
-//       brand: populatedProduct.brand,
-//       mainMaterial: populatedProduct.mainMaterial,
-//       color: populatedProduct.color,
-//       description: populatedProduct.description || '',
-//       searchData: `${populatedProduct.productTitle} ${populatedProduct.brand} ${categoryName} ${populatedProduct.subCategories.join(' ')} ${populatedProduct.mainMaterial} ${populatedProduct.color} ${populatedProduct.description || ''}`.toLowerCase()
-//     };
-//   };
 
 
 const productController = {
@@ -104,7 +81,6 @@ const productController = {
                 size,
                 sku,
                 subCategory,
-                // inStock: newInventory.quantity,
                 createdBy: req.admin.email,
                 createdOn: new Date().toLocaleString('en-NG', { timeZone: 'Africa/Lagos' })
             });
@@ -798,35 +774,53 @@ const productController = {
 
        viewProductsBySubCategory: async (req, res) => {
         try {
-            // Get the sub-category id
-            const subCategoryId = req.params.id;
+          //   // Get the sub-category id
+          //   const subCategoryId = req.params.id;
     
-            // Retrieve subCategory by ID
-            const subCategory = await ProductSubCategory.findById(subCategoryId);
+          //   // Retrieve subCategory by ID
+          //   const subCategory = await ProductSubCategory.findById(subCategoryId);
     
-            // Check if the subCategory exists
-            if (!subCategory) {
-                return res.status(404).json({error: 'Product subCategory not found'});
-            }
+          //   // Check if the subCategory exists
+          //   if (!subCategory) {
+          //       return res.status(404).json({error: 'Product subCategory not found'});
+          //   }
     
-            // Fetch all products in the sub-category
-            const products = await Product.find({_id: {$in: subCategory.products}})
-            // .populate(''subCategory', 'name'')
-            // .populate('review', 'rating')
-            .sort({ _id: -1 });
+          //   // Fetch all products in the sub-category
+          //   const products = await Product.find({_id: {$in: subCategory.products}})
+          //   // .populate(''subCategory', 'name'')
+          //   // .populate('review', 'rating')
+          //   .sort({ _id: -1 });
     
-            // Reverse the order of products
-            // const reversedProducts = products.reverse();
+          //   // Reverse the order of products
+          //   // const reversedProducts = products.reverse();
     
-            res.json({
-              subCategory: subCategory.name,
-              totalProducts: products.length,
-              // products: products.map(product => product.productTitle)
-              products: products
-              // products: products.map(product => product._id)
+          //   res.json({
+          //     subCategory: subCategory.name,
+          //     totalProducts: products.length,
+          //     // products: products
+          // });
+
+          const { subCategoryId } = req.params;
+
+          // Find products, and populate category and subcategory details
+          const products = await Product.find({
+            subCategory: subCategoryId,
+          })
+            .populate("category", "name product_category_image")
+            .populate("subCategory", "name subCategoryImage");
+
+          if (!products || products.length === 0) {
+            return res
+              .status(404)
+              .json({ message: "No products found for this subcategory." });
+          }
+
+          res.status(200).json({
+            message: `Products retrieved successfully for SubCategory}`,
+            products,
           });
         } catch (error) {
-            console.error('Error in viewProductsByCategory:', error);
+            console.error('Error in viewProductsBySubCategory:', error);
             return res.status(500).json({error: 'Oops! An error occurred, please refresh'});
         }
     },
