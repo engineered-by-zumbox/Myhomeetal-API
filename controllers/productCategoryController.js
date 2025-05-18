@@ -54,7 +54,7 @@ const productCategoryController = {
 
   getProductCategories: async (req, res) => {
       try {
-          const productCategories = await ProductCategory.find().populate("products", "productTitle").populate("subCategory", "name");
+          const productCategories = await ProductCategory.find().populate("products", "productTitle images price").populate("subCategory", "name subCategoryImage");
 
           if(!productCategories){
               return res.status(404).json({error: 'No Product Category found'})
@@ -64,34 +64,6 @@ const productCategoryController = {
           return res.status(500).json({error: 'Ooops!! an error occured, please refresh'})
       }
   },
-
-  // getCategories: async (req, res) => {
-  //   try {
-  //     const catWithProducts = await ProductCategory.aggregate([
-  //       {
-  //         $lookup: {
-  //           from: "products",
-  //           localField: "_id",
-  //           foreignField: "category",
-  //           as: "products",
-  //         },
-  //       },
-  //       {
-  //         $sort: { name: 1 },
-  //       },
-  //     ]).collation({ locale: "en", strength: 2 });
-
-  //     return res.status(200).json({
-  //       message: "all categories with Products and Subcategories",
-  //       data: catWithProducts,
-  //     });
-  //   } catch (error) {
-  //     console.log(error.message);
-  //     return res
-  //       .status(500)
-  //       .json({ error: "Ooops!! an error occured, please refresh" });
-  //   }
-  // },
 
   
   getTopProductCategories: async (req, res) => {

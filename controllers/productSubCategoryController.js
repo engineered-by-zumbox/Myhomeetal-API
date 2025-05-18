@@ -2,6 +2,7 @@ const productSubCategoryModel = require('../models/ProductSubCategory');
 const productCategory = require('../models/ProductCategory');
 const cloudinary = require("../config/cloudinary");
 const fs = require("fs");
+const Product = require("../models/Product");
 const mongoose = require("mongoose");
 
 
@@ -18,7 +19,7 @@ const createProductSubCategory = async (req, res) => {
             });
         }
 
-         subCategoryImage = null;
+         let subCategoryImage = null;
 
         // Handle file upload to Cloudinary
         if (req.file) {
@@ -43,24 +44,21 @@ const createProductSubCategory = async (req, res) => {
             createdOn: new Date().toLocaleString('en-NG', { timeZone: 'Africa/Lagos' })
         };
 
-        // console.log(subCategoryImage)
-
         // Create and save the new subcategory
         const subCategory = new productSubCategoryModel(data);
         const newSubCategory = await subCategory.save();
 
-        const productsCategory = await productCategory.findById(category).populate('products')
+        const productsCategory = await productCategory.findByIdAndUpdate(
+            category, 
+            {$push: {subCategory: newSubCategory._id}},
+            {new: true});
         
-    if (productsCategory) {
-        // Now populate the products field in the new subcategory
-        newSubCategory.products = productsCategory.products; 
-        await newSubCategory.save(); 
-
-        // Add the new subcategory to the productCategory's subCategory field
-        productsCategory.subCategory.push(newSubCategory._id);
-        await productsCategory.save();
-    }
-
+        if(!productsCategory) {
+            return res.status(404).json({
+              message: `Category with ID ${category} not found while adding subcategory.`,
+              
+            });
+        }
         res.status(200).json({
             message: 'Successfully created a new subcategory',
             subCategory: newSubCategory,
@@ -74,116 +72,37 @@ const createProductSubCategory = async (req, res) => {
     }
 };
 
+const getAllSubCategories = async (req, res) => {
+    try {
+        const subcategories = await productSubCategoryModel.find()//.populate('category');
 
-// const getProductSubCategory = async (req, res) => {
-//     try {
+        if (!subcategories || subcategories.length === 0) {
+            return res.status(404).json({ message: 'No subcategories found.' });
+        }
 
-//         const subCategories = await productSubCategoryModel.find().populate('products')
+        const subcategoriesWithProducts = await Promise.all(
+            subcategories.map(async (subcategory) => {
+                const products = await Product.find({
+                  subCategory: subcategory._id,
+                })
+                  .populate("category", "name product_category_image")
+                  .populate("subCategory", "name subCategoryImage");
 
-//         if(!subCategories) {
-//             return res.status(400).json({
-//                 message: 'there are no available sub-categories'
-//             })
-//         } else {
-//             return res.status(200).json({
-//                 message: "all sub_categories",
-//                 data: subCategories
-//             })
-//         }
-//     } catch (error) {
-//         console.error('server errror:', error.message);
-//         res.status(500).json({
-//             error: error.message,
-//             message: "unable to fetch sub-categories"
-//         })
-//     }
-// }
-
-
-const getAllSubCat = async (req, res) => {
-  try {
-    const subCatWithProducts = await productSubCategoryModel.aggregate([
-      {
-        $lookup: {
-          from: "products",
-          localField: "_id",
-          foreignField: "subCategory",
-          as: "products",
-        },
-      },
-    ]);
-    return res.status(200).json({
-      message: "all subcategories with products",
-      data: subCatWithProducts,
-    });
-  } catch (error) {
-    console.error("error fetching subCategories with products:", error.message);
-    res.status(500).json({
-      message: `unable to fetch subcategory and products`,
-    });
-  }
+                return {
+                    ...subcategory.toObject(),
+                    products: products, 
+                };
+            })
+        );
+        res.status(200).json({
+            message: 'All SubCategory',
+            subcategories: subcategoriesWithProducts,
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Server error', message: error.message });
+    }
 };
-
-// const getAllSubCat = async (req, res) => {
-//   try {
-//     const subCatWithProducts = await productSubCategoryModel.aggregate([
-//       {
-//         $lookup: {
-//           from: "products",
-//           localField: "_id",
-//           foreignField: "subCategory",
-//           as: "products",
-//         },
-//       },
-//       {
-//         $unwind: {
-//           // Optional: Unwind the products array to process each product individually
-//           path: "$products",
-//           preserveNullAndEmptyArrays: true, // Keep subcategories even if they have no products
-//         },
-//       },
-//       {
-//         $project: {
-//           _id: 1, // Include the subcategory's _id
-//           name: 1, // Include the subcategory's name
-//           //   subCategoryImage: 1,  Include the subcategory's image
-
-//           // Include specific product properties
-//           "products._id": 1,
-//           "products.productTitle": 1,
-//           "products.price": 1,
-//           "products.description": 1,
-//           // Add other product properties you want to include
-
-//           // Optionally, you can reshape or rename fields like below
-//           // productId: '$products._id',
-//         },
-//       },
-//       {
-//         $group: {
-//           // Group back by subcategory _id to reconstruct the products array
-//           _id: "$_id",
-//           name: { $first: "$name" },
-//           //   subCategoryImage: { $first: "$subCategoryImage" },
-//           products: { $push: "$products" },
-//         },
-//       },
-//       {
-//         $sort: { name: 1 },
-//       },
-//     ]);
-//     return res.status(200).json({
-//       message: "all subcategories with products",
-//       data: subCatWithProducts,
-//     });
-//   } catch (error) {
-//     console.error("error fetching subCategories with products:", error.message);
-//     res.status(500).json({
-//       message: `unable to fetch subcategory and products`,
-//     });
-//   }
-// };
-
 
 const getOneSubCat = async (req, res) => {
     try {
@@ -273,7 +192,7 @@ const updateSubCategory = async (req, res) => {
         const checkSubCategory = await productSubCategoryModel.findOne({ name }); 
         if (checkSubCategory) {
             return res.status(400).json({
-                message: `category with ${name} already exists`
+                message: `Sub category with ${name} already exists`
             })
         }
 
@@ -293,7 +212,7 @@ const updateSubCategory = async (req, res) => {
                 // if an image was provided, delete the previous image, by extracting the publicId
                 const public_id = updateData.subCategoryImage.split('/').slice(7).join('/').split('.')[0];
 
-                const deleteImage = await cloudinary.uploader.destroy(public_id);  // then delete the image
+                await cloudinary.uploader.destroy(public_id);  // then delete the image
                 // console.log(public_id)  // log the public id
                 // console.log(deleteImage) // log to know if the image available on the server was deleted
                 } 
@@ -327,7 +246,7 @@ const updateSubCategory = async (req, res) => {
             {new: true})
 
             res.status(200).json({
-            message: 'successfully updated product category',
+            message: 'successfully updated product sub category',
             data: updatedSubCategory
         })
     } catch(error) {
@@ -385,10 +304,10 @@ const deleteSubCategory = async (req, res) => {
 module.exports = { 
     createProductSubCategory, 
     // getProductSubCategory, 
-    getAllSubCat,
     // getOneSubCategory,
     getOneSubCat,
     updateSubCategory,
-    deleteSubCategory
+    deleteSubCategory,
+    getAllSubCategories
 }
 

@@ -12,9 +12,7 @@ const Memcached = require('memcached');
 const logSearchQuery = require('../utils/logSearchQuery')
 
 
-
-const memcached = new Memcached(process.env.MEMCACHED_SERVER || 'localhost:11211')
-
+const memcached = new Memcached(process.env.MEMCACHED_SERVER || 'localhost:11211')      
 
 
 
@@ -83,7 +81,6 @@ const productController = {
                 size,
                 sku,
                 subCategory,
-                // inStock: newInventory.quantity, ---- YOU SEE HOW YOU ARE CONFUSING YOURSELF MY CHIEF
                 createdBy: req.admin.email,
                 createdOn: new Date().toLocaleString('en-NG', { timeZone: 'Africa/Lagos' })
             });
@@ -727,130 +724,56 @@ const productController = {
           console.error('Error in getSuggestions:', error);
           res.status(500).json({ message: 'Failed to fetch suggestions.', error: error.message });
         }
-      },
-
-
-      // VALENTINE, YOU DON'T NEED THIS
-      updateStock: async (req, res) => {
-        try {
-          const productId = req.params.id;
-          // Get the inStock value from request body
-          const { inStock } = req.body;
       
-          // Find the product
-          const product = await Product.findById(productId);
-          
-          // Check if product exists
-          if (!product) {
-            return res.status(404).json({
-              message: 'trying to update stock of unavailable product'
-            });
-          }
-    
-          const stockData = {
-            inStock: inStock 
-          };
-      
-          // Update the product with new stock status
-          const updatedProduct = await Product.findByIdAndUpdate(
-            productId,
-            stockData,
-            { new: true, runValidators: true }
-          );
-          return res.status(200).json({
-            message: 'Stock availability updated successfully',
-            data: updatedProduct
-          });
-      
-        } catch (error) {
-          console.error('Stock update error:', error);
-          return res.status(500).json({
-            message: 'Failed to update stock availability',
-            error: error.message
-          });
-        }
-        //   I GUESS YOU WILL BE NEEDING THIS ANYMORE TOO, IF YOU ARE NOT CLEAR IT
-
-        // try {
-        //   const productId = req.params.id;
-        //   const { inStock } = req.body;
-      
-        //   console.log('Request body:', req.body);
-        //   console.log('Received inStock value:', inStock);
-        //   console.log('Type of inStock:', typeof inStock);
-      
-        //   // Find the product
-        //   const product = await Product.findById(productId);
-          
-        //   if (!product) {
-        //     return res.status(404).json({
-        //       success: false,
-        //       message: 'Product not found'
-        //     });
-        //   }
-      
-        //   console.log('Current product inStock:', product.inStock);
-      
-        //   // Ensure we're setting a boolean value
-        //   const newInStock = Boolean(inStock);
-          
-        //   console.log('New inStock value to be set:', newInStock);
-      
-        //   const updatedProduct = await Product.findByIdAndUpdate(
-        //     productId,
-        //     { inStock: newInStock },
-        //     { new: true, runValidators: true }
-        //   );
-      
-        //   console.log('Updated product inStock:', updatedProduct.inStock);
-      
-        //   return res.status(200).json({
-        //     success: true,
-        //     message: 'Stock availability updated successfully',
-        //     data: updatedProduct
-        //   });
-      
-        // } catch (error) {
-        //   console.error('Stock update error:', error);
-        //   return res.status(500).json({
-        //     success: false,
-        //     message: 'Failed to update stock availability',
-        //     error: error.message
-        //   });
-        // }
-       },
-
        viewProductsBySubCategory: async (req, res) => {
         try {
-            // Get the sub-category id
-            const subCategoryId = req.params.id;
+          //   // Get the sub-category id
+          //   const subCategoryId = req.params.id;
     
-            // Retrieve subCategory by ID
-            const subCategory = await ProductSubCategory.findById(subCategoryId);
+          //   // Retrieve subCategory by ID
+          //   const subCategory = await ProductSubCategory.findById(subCategoryId);
     
-            // Check if the subCategory exists
-            if (!subCategory) {
-                return res.status(404).json({error: 'Product subCategory not found'});
-            }
+          //   // Check if the subCategory exists
+          //   if (!subCategory) {
+          //       return res.status(404).json({error: 'Product subCategory not found'});
+          //   }
     
-            // Fetch all products in the sub-category
-            const products = await Product.find({_id: {$in: subCategory.products}})
-            // .populate(''subCategory', 'name'')
-            // .populate('review', 'rating')
-            .sort({ _id: -1 });
+          //   // Fetch all products in the sub-category
+          //   const products = await Product.find({_id: {$in: subCategory.products}})
+          //   // .populate(''subCategory', 'name'')
+          //   // .populate('review', 'rating')
+          //   .sort({ _id: -1 });
     
-            // Reverse the order of products
-            // const reversedProducts = products.reverse();
+          //   // Reverse the order of products
+          //   // const reversedProducts = products.reverse();
     
-            res.json({
-              subCategory: subCategory.name,
-              totalProducts: products.length,
-              // products: products.map(product => product.productTitle)
-              products: products
-              // products: products.map(product => product._id)
+          //   res.json({
+          //     subCategory: subCategory.name,
+          //     totalProducts: products.length,
+          //     // products: products
+          // });
+
+          const { subCategoryId } = req.params;
+
+          // Find products, and populate category and subcategory details
+          const products = await Product.find({
+            subCategory: subCategoryId,
+          })
+            .populate("category", "name product_category_image")
+            .populate("subCategory", "name subCategoryImage");
+
+          if (!products || products.length === 0) {
+            return res
+              .status(404)
+              .json({ message: "No products found for this subcategory." });
+          }
+
+          res.status(200).json({
+            message: `Products retrieved successfully for SubCategory}`,
+            products,
           });
         } catch (error) {
-            console.error('Error in viewProductsByCategory:', error);
+            console.error('Error in viewProductsBySubCategory:', error);
             return res.status(500).json({error: 'Oops! An error occurred, please refresh'});
         }
     },
