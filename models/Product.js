@@ -84,6 +84,7 @@ const productSchema = new Schema({
   updatedBy: {
     type: String,
   },
+
 });
 
 const Product = model('Product', productSchema);
