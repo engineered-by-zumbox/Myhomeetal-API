@@ -724,7 +724,7 @@ const productController = {
           console.error('Error in getSuggestions:', error);
           res.status(500).json({ message: 'Failed to fetch suggestions.', error: error.message });
         }
-      
+      },
        viewProductsBySubCategory: async (req, res) => {
         try {
           //   // Get the sub-category id
@@ -778,5 +778,5 @@ const productController = {
         }
     },
 
-}
+  }
 module.exports = productController;
